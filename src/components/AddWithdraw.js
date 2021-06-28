@@ -1,12 +1,45 @@
 import styled from 'styled-components';
-import {useState} from 'react';
+import {useState, useContext} from 'react';
+import axios from 'axios';
+import UserContext from './contexts/UserContext';
+import { useHistory } from 'react-router-dom';
+import Joi, { number } from 'joi';
 
 export default function AddWithdraw(){
     const [value, setValue] = useState('');
     const [description, setDescription] = useState('');
-    
+    const {userInformation} = useContext(UserContext);
+    const history = useHistory();
+
+    const schema = Joi.object({
+        value: Joi.number().integer().min(1).required(),
+        description: Joi.string().required()
+    })
+
     function addWithdraw(e){
         e.preventDefault();
+        const { error } = schema.validate({value, description});
+        if(!!error){
+            alert("Preencha a descrição e digite o valor em centavos");
+            return;
+        }
+        const config = {
+            headers: {
+                "Authorization": "Bearer " + userInformation.token
+            }
+        }
+
+        const now = new Date();
+        const date = now.toLocaleDateString();
+        
+        const request = axios.post("http://localhost:4000/add-withdraw",{value, description, date, isDeposit: false}, config)
+        request.then(reply => {
+            alert("Withdraw created with success :)");
+            history.push('/extracts');
+        })
+        request.catch(() => {
+            alert("Was not possible to create withdraw");
+        })
     }
     
     return(
@@ -48,7 +81,7 @@ const Content = styled.div`
         padding: 0 15px;
     }
     input::placeholder{
-        color: #000000;
+        color: #c2c2c2;
         font-size: 20px;
     }
     button{

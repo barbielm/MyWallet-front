@@ -1,6 +1,8 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { useState } from 'react';
+import axios from 'axios';
+
 export default function SignUp(){
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -17,7 +19,16 @@ export default function SignUp(){
     function signUp(e){
         e.preventDefault();
 
-        if(checkPasswords()) history.push('/');
+        if(checkPasswords()){
+            const request = axios.post('http://localhost:4000/sign-up',{name,email,password});
+            request.then(reply => {
+                alert("new user created with success :)");
+                history.push('/');
+            })
+            request.catch(() => {
+                alert("This email has already been declared");
+            })
+        }
     }
 
     return(

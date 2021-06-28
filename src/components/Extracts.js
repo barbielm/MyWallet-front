@@ -1,24 +1,93 @@
-import { useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 import { IoIosLogOut, IoIosAddCircleOutline, IoIosRemoveCircleOutline } from "react-icons/io";
 import { IconContext } from "react-icons";
 import { useHistory } from 'react-router-dom';
+import axios from 'axios';
+import UserContext from './contexts/UserContext';
+import Extract from './Extract';
 
 export default function Extracts(){
+    const {userInformation, setUserInformation, render, setRender} = useContext(UserContext);
     const [name, setName] = useState('Fulano');
     const history = useHistory();
+    const [extractsList, setExtracts ] = useState([]);
+    const [loading, setLoading] = useState(false);
+    
+
+    function getExtracts(){
+        setLoading(true);
+        const config = {
+            headers: {
+                "Authorization": "Bearer " + userInformation.token
+            }
+        }
+        
+        const request = axios.get("http://localhost:4000/extracts",config)
+        request.then(reply => {
+            setLoading(false);
+            setExtracts(reply.data);
+            console.log(reply.data);
+            
+        })
+        request.catch(() => {
+            alert("Was not possible to get extracts");
+        }) 
+    }
+
+    function getBalance(){
+        let balance = 0;
+        for(let i = 0; i < extractsList.length; i++){
+            const element =  extractsList[i];
+            if(element.isDeposit) balance += element.value;
+            else balance -= element.value;
+        }
+        return balance/100;
+        
+    }
+
+    function logout(){
+        const config = {
+            headers: {
+                "Authorization": "Bearer " + userInformation.token
+            }
+        }
+        
+        const request = axios.post("http://localhost:4000/logout",{},config)
+        request.then(reply => {
+            setUserInformation(null);
+            history.push('/');
+        })
+        request.catch(() => {
+            alert("Was not possible to logout");
+        })
+    }
+
+    useEffect(() => {
+        setName(userInformation.name);
+        getExtracts();
+    },[])
 
     return(
         <Content>
             <Header>
                 <UserName>Olá, {name}</UserName>
                 <IconContext.Provider value={{className: "logout-icon"}}>
-                    <IoIosLogOut onClick={() => history.push('/')} />
+                    <IoIosLogOut onClick={logout} />
                 </IconContext.Provider>
             </Header>
             <ul className="extracts-list">
-                <DefaultMessage>Não há registros de entrada ou saída</DefaultMessage>    
-                <li className="extract"></li>
+                <List>
+                {(extractsList.length === 0 || loading) ? <DefaultMessage>Não há registros de entrada ou saída</DefaultMessage> 
+                : extractsList.map((e,i) => <Extract extract={e} key={i} />)
+                }
+                </List>
+                {(extractsList.length === 0 || loading) ? '' 
+                : 
+                <Balance>
+                    <Title>SALDO</Title>
+                    <Value getBalance={getBalance}>{getBalance()}</Value>
+                </Balance>}
             </ul>
             <Menu>
                 <Deposit onClick={() => history.push('/add-deposit')}>
@@ -53,10 +122,18 @@ const Content = styled.div`
         background: #ffffff;
         border-radius: 5px;
         width: 100%;
-        height: 68%;
+        height: 70%;
         margin: 20px 0 15px 0;
         position: relative;
+        padding: 20px 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
+    
+`
+const List = styled.div`
+
 `
 
 const DefaultMessage = styled.div`
@@ -119,4 +196,17 @@ const Deposit = styled.div`
     flex-direction: column;
     justify-content: space-between;
     padding: 10px;
+`
+const Balance = styled.div`
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+`
+const Value = styled.div`
+ color: ${props => (props.getBalance() > 0) ? '#03AC00' : '#C70000'}   
+`
+
+const Title = styled.div`
+    color: #000000;
 `

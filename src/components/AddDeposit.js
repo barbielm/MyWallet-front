@@ -1,12 +1,46 @@
 import styled from 'styled-components';
-import {useState} from 'react';
+import {useState, useContext} from 'react';
+import axios from 'axios';
+import UserContext from './contexts/UserContext';
+import { useHistory } from 'react-router-dom';
+import Joi from 'joi';
 
 export default function AddDeposit(){
     const [value, setValue] = useState('');
     const [description, setDescription] = useState('');
+    const {userInformation} = useContext(UserContext);
+    const history = useHistory();
+
+
+    const schema = Joi.object({
+        value: Joi.number().integer().min(1).required(),
+        description: Joi.string().required()
+    })
+
     
     function addDeposit(e){
         e.preventDefault();
+        const config = {
+            headers: {
+                "Authorization": "Bearer " + userInformation.token
+            }
+        }
+
+        const { error } = schema.validate({value, description});
+        if(!!error){
+            alert("Preencha a descrição e digite o valor em centavos");
+            return;
+        }
+        const now = new Date();
+        const date = now.toLocaleDateString();
+        const request = axios.post("http://localhost:4000/add-deposit",{value, description, date, isDeposit: true}, config)
+        request.then(reply => {
+            alert("Deposit created with success :)");
+            history.push('/extracts');
+        })
+        request.catch(() => {
+            alert("Was not possible to create deposit");
+        })
     }
     
     return(
@@ -16,8 +50,8 @@ export default function AddDeposit(){
             </Header>
             
             <form onSubmit={(e) => addDeposit(e)}>
-                <input type="email" placeholder="Valor" required value={value} onChange={e => setValue(e.target.value)} />
-                <input type="password" placeholder="Descrição" required value={description} onChange={e => setDescription(e.target.value)} />
+                <input type="text" placeholder="Valor" required value={value} onChange={e => setValue(e.target.value)} />
+                <input type="text" placeholder="Descrição" required value={description} onChange={e => setDescription(e.target.value)} />
                 <button >Salvar Entrada</button>
             </form>
         </Content>
@@ -49,7 +83,7 @@ const Content = styled.div`
         padding: 0 15px;
     }
     input::placeholder{
-        color: #000000;
+        color: #c2c2c2;
         font-size: 20px;
     }
     button{

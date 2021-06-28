@@ -1,15 +1,26 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import axios from 'axios';
+import UserContext from './contexts/UserContext';
+
 export default function Login(){
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const history = useHistory();
+    const {setUserInformation} = useContext(UserContext); 
 
     function signIn(e){
         e.preventDefault();
-
-        history.push('/extracts');
+        const request = axios.post("http://localhost:4000/sign-in",{email, password});
+        request.then(reply => {
+            setUserInformation(reply.data);
+            history.push('/extracts');
+        })
+        request.catch(() => {
+            alert("Password/email incorrect");
+        })
+        
     }
 
     return(
