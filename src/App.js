@@ -3,18 +3,17 @@ import GlobalStyle from './components/utils/GlobalStyles';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Extracts from './components/Extracts';
-import AddWithdraw from './components/AddWithdraw';
-import AddDeposit from './components/AddDeposit';
+import AddExtract from './components/AddExtract';
 import UserContext from './components/contexts/UserContext';
 import {useState} from 'react';
 
 
 function App() {
-  const [render, setRender] = useState(0);
   const [userInformation, setUserInformation] = useState(null);
+  const [isDeposit, setIsDeposit] = useState(null);
 
   return(
-  <UserContext.Provider value={{render, setRender, userInformation, setUserInformation}}>
+  <UserContext.Provider value={{userInformation, setUserInformation, isDeposit, setIsDeposit}}>
     <BrowserRouter>
       <GlobalStyle/>
       <Switch>
@@ -28,10 +27,10 @@ function App() {
           <Extracts/>
         </Route>
         <Route path='/add-deposit' exact>
-          <AddDeposit/>
+          <AddExtract/>
         </Route>
         <Route path='/add-withdraw' exact>
-          <AddWithdraw/>
+          <AddExtract/>
         </Route>
       </Switch>
     </BrowserRouter>

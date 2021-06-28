@@ -8,18 +8,20 @@ import UserContext from './contexts/UserContext';
 import Extract from './Extract';
 
 export default function Extracts(){
-    const {userInformation, setUserInformation, render, setRender} = useContext(UserContext);
-    const [name, setName] = useState('Fulano');
+    const {userInformation, setUserInformation, setIsDeposit} = useContext(UserContext);
+    const [name, setName] = useState('');
     const history = useHistory();
     const [extractsList, setExtracts ] = useState([]);
     const [loading, setLoading] = useState(false);
+    const localUser = JSON.parse(localStorage.getItem("userInformation"));
+    const {token} = localUser;
     
 
     function getExtracts(){
         setLoading(true);
         const config = {
             headers: {
-                "Authorization": "Bearer " + userInformation.token
+                "Authorization": "Bearer " + token
             }
         }
         
@@ -56,6 +58,7 @@ export default function Extracts(){
         const request = axios.post("http://localhost:4000/logout",{},config)
         request.then(reply => {
             setUserInformation(null);
+            localStorage.removeItem("userInformation");
             history.push('/');
         })
         request.catch(() => {
@@ -64,7 +67,10 @@ export default function Extracts(){
     }
 
     useEffect(() => {
-        setName(userInformation.name);
+        if(!userInformation){
+            setUserInformation(localUser)
+        }
+        setName(localUser.name);
         getExtracts();
     },[])
 
@@ -78,19 +84,22 @@ export default function Extracts(){
             </Header>
             <ul className="extracts-list">
                 <List>
-                {(extractsList.length === 0 || loading) ? <DefaultMessage>Não há registros de entrada ou saída</DefaultMessage> 
-                : extractsList.map((e,i) => <Extract extract={e} key={i} />)
-                }
+                    {(extractsList.length === 0 || loading) ? <DefaultMessage>Não há registros de entrada ou saída</DefaultMessage> 
+                    : extractsList.map((e,i) => <Extract extract={e} key={i} />)
+                    }
                 </List>
-                {(extractsList.length === 0 || loading) ? '' 
-                : 
-                <Balance>
-                    <Title>SALDO</Title>
-                    <Value getBalance={getBalance}>{getBalance()}</Value>
-                </Balance>}
+                    {(extractsList.length === 0 || loading) ? '' 
+                    : 
+                    <Balance>
+                        <Title>SALDO</Title>
+                        <Value getBalance={getBalance}>{getBalance().toFixed(2).replace('.',',')}</Value>
+                    </Balance>}
             </ul>
             <Menu>
-                <Deposit onClick={() => history.push('/add-deposit')}>
+                <Deposit onClick={() => 
+                    {history.push('/add-deposit');
+                    setIsDeposit(true);
+                    }}>
                     <IconContext.Provider value={{className: "extract-icon"}}>
                         <IoIosAddCircleOutline />
                     </IconContext.Provider>
@@ -99,7 +108,11 @@ export default function Extracts(){
                         <Name>Entrada</Name>
                     </Names>
                 </Deposit>
-                <Withdraw onClick={() => history.push('/add-withdraw')}>
+                <Withdraw onClick={() => 
+                    {history.push('/add-withdraw');
+                    setIsDeposit(false);
+                    }}>
+                    
                     <IconContext.Provider value={{className: "extract-icon"}}>
                         <IoIosRemoveCircleOutline />
                     </IconContext.Provider>
@@ -129,6 +142,7 @@ const Content = styled.div`
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        overflow-y: scroll;
     }
     
 `
@@ -153,7 +167,7 @@ const Header = styled.div`
     display: flex;
     justify-content: space-between;
     .logout-icon{
-        font-size: 24px;
+        font-size: 27px;
         color: #FFFFFF;
     }
 
@@ -173,7 +187,7 @@ const Menu = styled.div`
     font-size: 17px;
     font-weight: bold;
     .extract-icon{
-        font-size: 22px;
+        font-size: 25px;
         color: #ffffff;
     }
 `
@@ -198,13 +212,14 @@ const Deposit = styled.div`
     padding: 10px;
 `
 const Balance = styled.div`
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
     display: flex;
     justify-content: space-between;
 `
 const Value = styled.div`
- color: ${props => (props.getBalance() > 0) ? '#03AC00' : '#C70000'}   
+ color: ${props => (props.getBalance() > 0) ? '#03AC00' : '#C70000'} ;
+ font-weight: normal ;
 `
 
 const Title = styled.div`

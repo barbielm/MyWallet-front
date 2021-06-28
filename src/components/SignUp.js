@@ -20,7 +20,7 @@ export default function SignUp(){
         e.preventDefault();
 
         if(checkPasswords()){
-            const request = axios.post('http://localhost:4000/sign-up',{name,email,password});
+            const request = axios.post('http://localhost:4000/sign-up',{name,email,password,confirmPassword});
             request.then(reply => {
                 alert("new user created with success :)");
                 history.push('/');

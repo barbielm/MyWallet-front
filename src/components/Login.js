@@ -15,6 +15,7 @@ export default function Login(){
         const request = axios.post("http://localhost:4000/sign-in",{email, password});
         request.then(reply => {
             setUserInformation(reply.data);
+            localStorage.setItem("userInformation", JSON.stringify(reply.data));
             history.push('/extracts');
         })
         request.catch(() => {

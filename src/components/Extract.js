@@ -10,7 +10,7 @@ export default function Extract({extract}){
                     <Description>{description}</Description>
                 </Informations>
                 
-                <Value isDeposit={isDeposit}>{value/100}</Value>
+                <Value isDeposit={isDeposit}>{(value/100).toFixed(2).replace(".",",")}</Value>
             </li>
         </Content>
         
@@ -20,7 +20,7 @@ export default function Extract({extract}){
 const Content = styled.div`
     .extract{
         font-family: 'Raleway', sans-serif;
-        font-size: 18px;
+        font-size: 19px;
         display: flex;
         justify-content: space-between;
         margin-bottom: 20px; 

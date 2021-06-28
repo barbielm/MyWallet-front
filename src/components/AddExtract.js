@@ -1,24 +1,32 @@
 import styled from 'styled-components';
-import {useState, useContext} from 'react';
+import {useState, useContext, useEffect} from 'react';
 import axios from 'axios';
+import { IoArrowBackCircleOutline } from "react-icons/io5";
+import { IconContext } from "react-icons";
 import UserContext from './contexts/UserContext';
 import { useHistory } from 'react-router-dom';
 import Joi from 'joi';
 
-export default function AddDeposit(){
+export default function AddExtract(){
     const [value, setValue] = useState('');
     const [description, setDescription] = useState('');
-    const {userInformation} = useContext(UserContext);
+    const {userInformation, isDeposit, setUserInformation} = useContext(UserContext);
     const history = useHistory();
+    const localUser = JSON.parse(localStorage.getItem("userInformation"));
 
 
     const schema = Joi.object({
-        value: Joi.number().integer().min(1).required(),
+        value: Joi.number().min(0.01).precision(2).required(),
         description: Joi.string().required()
     })
 
+    useEffect(() => {
+        if(!userInformation){
+            setUserInformation(localUser)
+        }
+    },[])
     
-    function addDeposit(e){
+    function addExtract(e){
         e.preventDefault();
         const config = {
             headers: {
@@ -28,31 +36,39 @@ export default function AddDeposit(){
 
         const { error } = schema.validate({value, description});
         if(!!error){
-            alert("Preencha a descrição e digite o valor em centavos");
+            alert("Preencha a descrição e digite o valor em reais com duas casas decimais separando por ponto");
             return;
         }
+        console.log(value)
+        const cents = parseInt(value*100);
+        console.log(cents);
         const now = new Date();
         const date = now.toLocaleDateString();
-        const request = axios.post("http://localhost:4000/add-deposit",{value, description, date, isDeposit: true}, config)
+        const request = axios.post(`http://localhost:4000/add-extract`,{cents, description, date, isDeposit}, config)
         request.then(reply => {
-            alert("Deposit created with success :)");
+            alert("Extract created with success :)");
             history.push('/extracts');
         })
         request.catch(() => {
-            alert("Was not possible to create deposit");
+            alert("Was not possible to create extract");
         })
+
+        
     }
     
     return(
         <Content>
             <Header>
-                Nova Entrada
+                {(isDeposit) ? 'Nova Entrada' : 'Nova Saída'}
+                <IconContext.Provider value={{className: "back-icon"}}>
+                    <IoArrowBackCircleOutline onClick={() => history.push('/extracts')} />
+                </IconContext.Provider>
             </Header>
             
-            <form onSubmit={(e) => addDeposit(e)}>
+            <form onSubmit={(e) => addExtract(e)}>
                 <input type="text" placeholder="Valor" required value={value} onChange={e => setValue(e.target.value)} />
                 <input type="text" placeholder="Descrição" required value={description} onChange={e => setDescription(e.target.value)} />
-                <button >Salvar Entrada</button>
+                <button >{(isDeposit) ? 'Salvar Entrada' : 'Salvar Saída'}</button>
             </form>
         </Content>
         
@@ -104,5 +120,11 @@ const Header = styled.div`
     font-weight: bold;
     font-size: 26px;
     color: #FFFFFF;
+    position: relative;
+    .back-icon{
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
  
 `
